@@ -3,7 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { ReactComponent as SearchLogo } from "./iconmonstr-search-thin.svg";
 import { ReactComponent as Upload } from "./iconmonstr-upload-17.svg";
 import { ReactComponent as Drop } from "./iconmonstr-arrow-65.svg";
-import { getCVDetails, search, uploadCV } from "./services";
+import { search, uploadCV } from "./services";
 
 function App() {
   const [file, setFile] = useState<File>();
@@ -13,18 +13,15 @@ function App() {
     (e) => {
       e.preventDefault();
       search(searchInput).then((res) => {
+        if (res.data.length === 0) {
+          alert("No CVs matching the provided keywords.");
+        }
         setSearchResult(res.data);
       });
     },
     [searchInput]
   );
-  const handleClick = useCallback((id: string) => {
-    getCVDetails(id)
-      .then((res) => {
-        window.location.href = res.data.url;
-      })
-      .catch(console.error);
-  }, []);
+
   const handleUpload = useCallback(() => {
     if (file)
       uploadCV(file)
@@ -60,21 +57,34 @@ function App() {
             </form>
           </div>
           <div className="result">
-            {searchResult.length > 0 && (
+            {searchResult.length > 0 ? (
               <h2 style={{ width: "80%" }}>Results "{searchInput}":</h2>
+            ) : (
+              <h2>No CVs matching the provided keywords.</h2>
             )}
             {searchResult.map((val: CVModel) => {
               return (
-                <div key={`cv${val.id}`} className="cv-result">
-                  <p>
-                    <b>CV ID: {val.id}</b>
-                    <br />
-                    type: {val.type}
-                    <br />
-                    Upload date:{" "}
-                    {new Date(parseInt(val.uploadedDate)).toUTCString()}
-                  </p>
-                </div>
+                <>
+                  <div key={`cv${val.id}`} className="cv-result">
+                    <p>
+                      <b>CV ID: {val.id}</b>
+                      <br />
+                      <b>CV Name: {val.filename.substring(20)}</b>
+                      <br />
+                      type: {val.type}
+                      <br />
+                      Upload date:{" "}
+                      {new Date(parseInt(val.uploadedDate)).toUTCString()}
+                      <br />
+                      <iframe
+                        src={val.filename}
+                        width="600"
+                        height="600"
+                        title={`CV Document ${val.id}`}
+                      ></iframe>
+                    </p>
+                  </div>
+                </>
               );
             })}
           </div>
